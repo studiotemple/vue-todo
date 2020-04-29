@@ -11,29 +11,29 @@ import LocalStorage from 'lowdb/adapters/LocalStorage'
 import TodoCreator from './TodoCreator'
 import TodoItem from './TodoItem'
 export default {
-    components: {
-        TodoCreator,
-        TodoItem
-    },
-    data () {
-        return {
-            db: null
-        }
-    },
-    created () {
-        this.initDB()
-    },
-    methods: {
-        initDB () {
-            const adapter = new LocalStorage('todo-app')
-            this.db = lowdb(adapter)
-
-            console.log(this.db)
-            //Local DB 초기화
-            this.db.defaults({
-                todos: [] // Collection
-            }).write()
-        }
+  components: {
+    TodoCreator,
+    TodoItem
+  },
+  data () {
+    return {
+      db: null
     }
+  },
+  created () {
+    this.initDB()
+  },
+  methods: {
+    initDB () {
+      const adapter = new LocalStorage('todo-app')
+      this.db = lowdb(adapter)
+
+      console.log(this.db)
+      // Local DB 초기화
+      this.db.defaults({
+        todos: [] // Collection
+      }).write()
+    }
+  }
 }
 </script>
