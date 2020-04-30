@@ -1,3 +1,68 @@
 <template>
-    <h1>Todo Item</h1>
+  <div>
+    <div class="todo-tiem">
+        <input
+            v-model="done"
+            type="checkbox"
+          />
+    </div>
+    <div class="time__title-wrap">
+        <div class="item__title">
+            {{ todo.title }}
+        </div>
+        <div class="item__date">
+            {{ date }}
+        </div>
+    </div>
+    <div class="item__actions">
+       <button @click="onEditMode">수정</button>
+       <button @click="deleteTodo">삭제</button>
+    </div>
+  </div>
 </template>
+
+<script>
+import dayjs from 'dayjs'
+
+export default {
+  props: {
+    todo: Object
+  },
+  computed: {
+    done: {
+      get () {
+        return this.todo.done
+      },
+      set (done) {
+        this.updateTodo({
+          done
+        })
+      }
+    },
+    date () {
+      const date = dayjs(this.todo.createdAt)
+      const isSame = date.isSame(this.todo.updatedAt)
+
+      if (isSame) {
+        return date.format('YYYY년 MM월 DD일')
+      } else {
+        return `${date.format('YYYY년 MM월 DD일')} (수정됨)`
+      }
+    }
+  },
+  methods: {
+    onEditMode () {
+
+    },
+    offEditMode () {
+
+    },
+    updateTodo (value) {
+      this.$emit('update-todo', this.todo, value)
+    },
+    deleteTodo () {
+      this.$emit('delete-todo', this.todo)
+    }
+  }
+}
+</script>
