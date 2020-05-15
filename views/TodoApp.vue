@@ -2,15 +2,21 @@
     <div class="todo-app">
       <div class="todo-app__actions">
         <div class="filters">
-          <button
-            :class="{ active: filter === 'all'}"
-            @click="changeFilter('all')">모든 항목 ({{ total }})</button>
-          <button
-            :class="{ active: filter === 'active'}"
-            @click="changeFilter('active')">해야 할 항목 ({{ activeCount }})</button>
-          <button
-            :class="{ active: filter === 'completed'}"
-            @click="changeFilter('completed')">완료된 항목 ({{ completedCount }})</button>
+          <router-link
+            to="all"
+            tag="button">
+            모든 항목 ({{ total }})
+          </router-link>
+          <router-link
+            to="active"
+            tag="button">
+            해야 할 항목 ({{ activeCount }})
+          </router-link>
+          <router-link
+            to="completed"
+            tag="button">
+            완료된 항목 ({{ completedCount }})
+          </router-link>
         </div>
 
         <div class="actions clearfix">
@@ -60,13 +66,9 @@
 </template>
 
 <script>
-import lowdb from 'lowdb'
-import LocalStorage from 'lowdb/adapters/LocalStorage'
-import cryptoRandomString from 'crypto-random-string'
+
 import _cloneDeep from 'lodash/cloneDeep'
-import _find from 'lodash/find'
-// eslint-disable-next-line no-unused-vars
-import _assign from 'lodash/assign'
+
 import _findIndex from 'lodash/findIndex'
 import _forEachRight from 'lodash/forEachRight'
 import scrollTo from 'scroll-to'
@@ -78,16 +80,9 @@ export default {
     TodoCreator,
     TodoItem
   },
-  data () {
-    return {
-      db: null,
-      todos: [],
-      filter: 'all'
-    }
-  },
   computed: {
     filteredTodos () {
-      switch (this.filter) {
+      switch (this.$route.params.id) {
         case 'all':
         default:
           return this.todos
@@ -96,15 +91,6 @@ export default {
         case 'completed':
           return this.todos.filter(todo => todo.done)
       }
-    },
-    total () {
-      return this.todos.length
-    },
-    activeCount () {
-      return this.todos.filter(todo => !todo.done).length
-    },
-    completedCount () {
-      return this.todos.filter(todo => todo.done).length
     },
     allDone: {
       get () {
@@ -117,56 +103,12 @@ export default {
   },
   created () {
     this.initDB()
+    this.$store.dispatch('todoApp/updateTodo', {
+      todo,
+      value
+    })
   },
   methods: {
-    initDB () {
-      const adapter = new LocalStorage('todo-app')
-      this.db = lowdb(adapter)
-
-      console.log(this.db)
-
-      const hasTodos = this.db.has('todos').value()
-
-      if (hasTodos) {
-        // eslint-disable-next-line no-undef
-        this.todos = _cloneDeep(this.db.getState().todos)
-      } else {
-        // Local DB 초기화
-        this.db
-          .defaults({
-            todos: [] // Collection
-          })
-          .write()
-      }
-    },
-    createTodo (title) {
-      const newTodo = {
-        id: cryptoRandomString({ length: 10 }),
-        title,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        done: false
-      }
-
-      // DB에 쓰고
-      this.db
-        .get('todos') // lodash
-        .push(newTodo) // lodash
-        .write() // lowdb
-
-      // 화면에 갱신
-      this.todos.push(newTodo)
-    },
-    updateTodo (todo, value) {
-      this.db
-        .get('todos') // lodash
-        .find({ id: todo.id }) // lodash
-        .assign(value)
-        .write() // lowdb
-
-      const foundTodo = _find(this.todos, { id: todo.id })
-      Object.assign(foundTodo, value)
-    },
     deleteTodo (todo) {
       this.db
         .get('todos')
@@ -175,9 +117,6 @@ export default {
 
       const foundIndex = _findIndex(this.todos, { id: todo.id })
       this.$delete(this.todos, foundIndex)
-    },
-    changeFilter (filter) {
-      this.filter = filter
     },
     completeAll (checked) {
       // DB
@@ -236,5 +175,10 @@ export default {
 </script>
 
 <style lang="scss">
-  @import "scss/style"
+  @import "scss/style";
+
+  .filters button.router-link-active {
+    background: royalblue;
+    color: #ffffff;
+  }
 </style>

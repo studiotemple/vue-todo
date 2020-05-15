@@ -10,19 +10,30 @@ Vue.use(VueRouter)
 const routes = [
   // config
   {
+    name: 'index',
     path: '/',
     component: Home
   },
   {
+    name: 'about',
     path: '/about',
     component: About
   },
   {
+    name: 'todos',
+    redirect: '/todos/all',
     path: '/todos',
-    component: TodoApp
+    component: TodoApp,
+    children: [
+      {
+        name: 'todos-filter',
+        path: ':id'
+      }
+    ]
   }
 ]
 
 export default new VueRouter({
+  // mode: 'history',
   routes
 })
