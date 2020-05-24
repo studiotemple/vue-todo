@@ -29,7 +29,8 @@ export default {
         this.title = this.title.trim()
         return
       }
-      this.$emit('create-todo', this.title)
+      // this.$emit('create-todo', this.title)
+      this.$store.dispatch('todoApp/createTodo', this.title)
       this.title = ''
 
       this.$nextTick(() => {

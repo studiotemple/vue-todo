@@ -1,99 +1,101 @@
 <template>
-    <div class="todo-app">
-      <div class="todo-app__actions">
-        <div class="filters">
-          <router-link
-            to="all"
-            tag="button">
-            모든 항목 ({{ total }})
-          </router-link>
-          <router-link
-            to="active"
-            tag="button">
-            해야 할 항목 ({{ activeCount }})
-          </router-link>
-          <router-link
-            to="completed"
-            tag="button">
-            완료된 항목 ({{ completedCount }})
-          </router-link>
-        </div>
+  <div class="todo-app">
 
-        <div class="actions clearfix">
-          <div class="float--left">
-            <label>
-              <input
-                v-model="allDone"
-                type="checkbox">
-              <span class="icon"><i class="material-icons">done_all</i></span>
-            </label>
-          </div>
-          <div class="float--right">
-            <button
-              class="btn float--left"
-              @click="scrollToTop">
-              <i class="material-icons">expand_less</i>
-            </button>
-            <button
-              class="btn float--left"
-              @click="scrollToBottom">
-              <i class="material-icons">expand_more</i>
-            </button>
-            <button
-              class="btn btn--danger float--left"
-              @click="clearCompleted()">
-                <i class="material-icons">delete_sweep</i>
-              </button>
-          </div>
-        </div>
+    <div class="todo-app__actions">
+      <!-- FILTERS -->
+      <div class="filters">
+        <router-link
+          to="all"
+          tag="button"
+        >
+          모든 항목 ({{ total }})
+        </router-link>
+        <router-link
+          to="active"
+          tag="button"
+        >
+          해야 할 항목 ({{ activeCount }})
+        </router-link>
+        <router-link
+          to="completed"
+          tag="button"
+        >
+          완료된 항목 ({{ completedCount }})
+        </router-link>
       </div>
 
-      <div class="todo-app__list">
-        <todo-item
-          v-for="todo in filteredTodos"
-          :key="todo.id"
-          :todo="todo"
-
-          @update-todo="updateTodo"
-          @delete-todo="deleteTodo"
-        />
+      <!-- ACTIONS -->
+      <div class="actions clearfix">
+        <label class="float--left">
+          <input
+            v-model="allDone"
+            type="checkbox"
+          />
+          <span class="icon"><i class="material-icons">done_all</i></span>
+        </label>
+        <div class="float--right clearfix">
+          <button
+            class="btn float--left"
+            @click="scrollToTop"
+          >
+            <i class="material-icons">expand_less</i>
+          </button>
+          <button
+            class="btn float--left"
+            @click="scrollToBottom"
+          >
+            <i class="material-icons">expand_more</i>
+          </button>
+          <button
+            class="btn btn--danger float--left"
+            @click="clearCompleted"
+          >
+            <i class="material-icons">delete_sweep</i>
+          </button>
+        </div>
       </div>
-
-      <todo-creator
-        class="todo-app__creator"
-        @create-todo="createTodo"/>
     </div>
+
+    <!-- LIST -->
+    <div class="todo-app__list">
+      <todo-item
+        v-for="todo in filteredTodos"
+        :key="todo.id"
+        :todo="todo"
+      />
+    </div>
+
+    <!-- INSERT -->
+    <todo-creator class="todo-app__creator" />
+
+  </div>
 </template>
 
 <script>
-
-import _cloneDeep from 'lodash/cloneDeep'
-
-import _findIndex from 'lodash/findIndex'
-import _forEachRight from 'lodash/forEachRight'
+import { mapState, mapGetters, mapMutations, mapActions } from 'vuex'
 import scrollTo from 'scroll-to'
 import TodoCreator from '~/components/TodoCreator'
 import TodoItem from '~/components/TodoItem'
-
 export default {
+  name: 'TodoApp',
   components: {
     TodoCreator,
     TodoItem
   },
   computed: {
-    filteredTodos () {
-      switch (this.$route.params.id) {
-        case 'all':
-        default:
-          return this.todos
-        case 'active':
-          return this.todos.filter(todo => !todo.done)
-        case 'completed':
-          return this.todos.filter(todo => todo.done)
-      }
-    },
+    ...mapState('todoApp', [
+      'db',
+      'todos'
+    ]),
+    ...mapGetters('todoApp', [
+      'filteredTodos',
+      'total',
+      'activeCount',
+      'completedCount'
+    ]),
     allDone: {
       get () {
+        // 전체 항목 개수와 완료된 항목 개수가 일치하고 항목 개수가 1개 이상인 경우.
         return this.total === this.completedCount && this.total > 0
       },
       set (checked) {
@@ -101,74 +103,28 @@ export default {
       }
     }
   },
+  watch: {
+    $route () {
+      this.updateFilter(this.$route.params.id)
+    }
+  },
   created () {
     this.initDB()
-    this.$store.dispatch('todoApp/updateTodo', {
-      todo,
-      value
-    })
   },
   methods: {
-    deleteTodo (todo) {
-      this.db
-        .get('todos')
-        .remove({ id: todo.id })
-        .write()
-
-      const foundIndex = _findIndex(this.todos, { id: todo.id })
-      this.$delete(this.todos, foundIndex)
-    },
-    completeAll (checked) {
-      // DB
-      const newTodos = this.db
-        .get('todos')
-        .forEach(todo => {
-          todo.done = checked
-        })
-        .write()
-
-      // Local todos
-      // this.todos.forEach(todo => {
-      //   todo.done = checked
-      // })
-      this.todos = _cloneDeep(newTodos)
-    },
-    clearCompleted () {
-      // this.todos.forEach(todo => {
-      //   if (todo.done) {
-      //     this.deleteTodo(todo)
-      //   }
-      // })
-
-      // this.todos
-      //   .reduce((list, todo, index) => {
-      //     if (todo.done) {
-      //       list.push(index)
-      //     }
-      //     return list
-      //   }, [])
-      //   .reverse()
-      //   .forEach(index => {
-      //     this.deleteTodo(this.todos[index])
-      //   })
-
-      _forEachRight(this.todos, todo => {
-        if (todo.done) {
-          this.deleteTodo(todo)
-        }
-      })
+    ...mapMutations('todoApp', [
+      'updateFilter'
+    ]),
+    ...mapActions('todoApp', [
+      'initDB',
+      'completeAll',
+      'clearCompleted'
+    ]),
+    scrollToBottom () {
+      scrollTo(0, document.body.scrollHeight) // x, y
     },
     scrollToTop () {
-      scrollTo(0, 0, {
-        ease: 'linear',
-        duration: 2000
-      })
-    },
-    scrollToBottom () {
-      scrollTo(0, document.body.scrollHeight, {
-        ease: 'linear',
-        duration: 2000
-      })
+      scrollTo(0, 0)
     }
   }
 }
@@ -176,9 +132,8 @@ export default {
 
 <style lang="scss">
   @import "scss/style";
-
   .filters button.router-link-active {
     background: royalblue;
-    color: #ffffff;
+    color: white;
   }
 </style>
