@@ -83,6 +83,7 @@ export default {
     TodoItem
   },
   computed: {
+    // Helpers
     ...mapState('todoApp', [
       'db',
       'todos'
