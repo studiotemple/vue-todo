@@ -2,7 +2,7 @@
     <section class="home">
         <div>
             <h1>
-                My Home
+                Renz`s Home
             </h1>
             <h2 @click="$router.push('/about')">
                 About
